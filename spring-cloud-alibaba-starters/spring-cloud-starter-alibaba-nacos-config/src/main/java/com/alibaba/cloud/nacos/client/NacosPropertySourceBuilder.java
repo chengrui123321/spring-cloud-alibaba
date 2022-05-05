@@ -33,14 +33,22 @@ import org.springframework.core.env.PropertySource;
 /**
  * @author xiaojing
  * @author pbting
+ *
+ * nacos PropertySource 建造器
  */
 public class NacosPropertySourceBuilder {
 
 	private static final Logger log = LoggerFactory
 			.getLogger(NacosPropertySourceBuilder.class);
 
+	/**
+	 * NacosConfigService
+	 */
 	private ConfigService configService;
 
+	/**
+	 * 获取配置超时时间
+	 */
 	private long timeout;
 
 	public NacosPropertySourceBuilder(ConfigService configService, long timeout) {
@@ -67,21 +75,38 @@ public class NacosPropertySourceBuilder {
 	/**
 	 * @param dataId Nacos dataId
 	 * @param group Nacos group
+	 *
+	 * 构建 NacosPropertySource
+	 * 获取 nacos 远程配置
 	 */
 	NacosPropertySource build(String dataId, String group, String fileExtension,
 			boolean isRefreshable) {
+		// 加载 nacos 配置
 		List<PropertySource<?>> propertySources = loadNacosData(dataId, group,
 				fileExtension);
+		// 构建 NacosPropertySource
 		NacosPropertySource nacosPropertySource = new NacosPropertySource(propertySources,
 				group, dataId, new Date(), isRefreshable);
+		// 将加载的 NacosPropertySource 放入 NacosPropertySourceRepository 中
+		// NacosPropertySourceRepository 中保存所有从 nacos 远程加载的 NacosPropertySource
+		// 将配置缓存到本地缓存中
 		NacosPropertySourceRepository.collectNacosPropertySource(nacosPropertySource);
 		return nacosPropertySource;
 	}
 
+	/**
+	 * 加载 nacos 配置
+	 * @param dataId 配置名
+	 * @param group 分组
+	 * @param fileExtension 配置扩展名
+	 * @return List<PropertySource<?>>
+	 */
 	private List<PropertySource<?>> loadNacosData(String dataId, String group,
 			String fileExtension) {
 		String data = null;
 		try {
+			// 获取配置，此处通过 NacodConfigService.getConfig(dataId, group, timeout) 获取
+			// 源码详见 Nacos 源码
 			data = configService.getConfig(dataId, group, timeout);
 			if (StringUtils.isEmpty(data)) {
 				log.warn(
@@ -94,6 +119,7 @@ public class NacosPropertySourceBuilder {
 						"Loading nacos data, dataId: '%s', group: '%s', data: %s", dataId,
 						group, data));
 			}
+			// 获取配置后，进行解析
 			return NacosDataParserHandler.getInstance().parseNacosData(dataId, data,
 					fileExtension);
 		}

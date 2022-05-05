@@ -30,22 +30,34 @@ import com.alibaba.cloud.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
+/**
+ * nacos 配置刷新历史记录
+ */
 public class NacosRefreshHistory {
 
 	private final static Logger log = LoggerFactory.getLogger(NacosRefreshHistory.class);
 
+	/**
+	 * 历史记录最大数量，默认 20
+	 */
 	private static final int MAX_SIZE = 20;
 
+	/**
+	 * 记录列表
+	 */
 	private final LinkedList<Record> records = new LinkedList<>();
 
 	private final ThreadLocal<DateFormat> DATE_FORMAT = ThreadLocal
 			.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
 
+	/**
+	 * 加密方式
+	 */
 	private MessageDigest md;
 
 	public NacosRefreshHistory() {
 		try {
+			// md5
 			md = MessageDigest.getInstance("MD5");
 		}
 		catch (NoSuchAlgorithmException e) {
@@ -68,6 +80,12 @@ public class NacosRefreshHistory {
 		}
 	}
 
+	/**
+	 * 添加刷新记录
+	 * @param dataId dataId
+	 * @param group group
+	 * @param data data
+	 */
 	public void addRefreshRecord(String dataId, String group, String data) {
 		records.addFirst(new Record(DATE_FORMAT.get().format(new Date()), dataId, group,
 				md5(data), null));
@@ -96,14 +114,28 @@ public class NacosRefreshHistory {
 				.toString(16);
 	}
 
+	/**
+	 * 配置历史记录
+	 */
 	static class Record {
 
+		/**
+		 * 时间戳
+		 */
 		private final String timestamp;
-
+		/**
+		 * dataId
+		 */
 		private final String dataId;
 
+		/**
+		 * 分组
+		 */
 		private final String group;
 
+		/**
+		 * md5 值
+		 */
 		private final String md5;
 
 		Record(String timestamp, String dataId, String group, String md5,

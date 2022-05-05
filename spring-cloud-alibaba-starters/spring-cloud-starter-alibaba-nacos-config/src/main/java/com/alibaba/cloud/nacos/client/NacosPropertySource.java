@@ -32,31 +32,42 @@ import org.springframework.util.CollectionUtils;
 /**
  * @author xiaojing
  * @author pbting
+ *
+ * nacos 加载远程配置
  */
 public class NacosPropertySource extends MapPropertySource {
 
 	/**
 	 * Nacos Group.
+	 *
+	 * 分组
 	 */
 	private final String group;
 
 	/**
 	 * Nacos dataID.
+	 *
+	 * dataId
 	 */
 	private final String dataId;
 
 	/**
 	 * timestamp the property get.
+	 *
+	 * 获取配置的时间戳
 	 */
 	private final Date timestamp;
 
 	/**
 	 * Whether to support dynamic refresh for this Property Source.
+	 *
+	 * 是否支持动态刷新
 	 */
 	private final boolean isRefreshable;
 
 	NacosPropertySource(String group, String dataId, Map<String, Object> source,
 			Date timestamp, boolean isRefreshable) {
+		// 创建父类，设置 PropertySource 名称为 dataId,group
 		super(String.join(NacosConfigProperties.COMMAS, dataId, group), source);
 		this.group = group;
 		this.dataId = dataId;

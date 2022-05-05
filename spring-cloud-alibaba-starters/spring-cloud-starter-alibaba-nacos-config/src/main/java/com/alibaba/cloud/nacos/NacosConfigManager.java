@@ -27,31 +27,47 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author zkzlx
+ *
+ * nacos 配置属性管理器
  */
 public class NacosConfigManager {
 
 	private static final Logger log = LoggerFactory.getLogger(NacosConfigManager.class);
 
+	/**
+	 * ConfigService 配置服务， nacos 配置核心类
+	 * 此处为 NacosConfigService
+	 */
 	private static ConfigService service = null;
 
+	/**
+	 * nacos 配置属性
+	 */
 	private NacosConfigProperties nacosConfigProperties;
 
 	public NacosConfigManager(NacosConfigProperties nacosConfigProperties) {
+		// 设置 NacosConfigProperties
 		this.nacosConfigProperties = nacosConfigProperties;
 		// Compatible with older code in NacosConfigProperties,It will be deleted in the
 		// future.
+		// 创建 ConfigService
 		createConfigService(nacosConfigProperties);
 	}
 
 	/**
 	 * Compatible with old design,It will be perfected in the future.
+	 *
+	 * 创建 ConfigService
 	 */
 	static ConfigService createConfigService(
 			NacosConfigProperties nacosConfigProperties) {
+		// ConfigService 为空，创建
 		if (Objects.isNull(service)) {
+			// 加锁
 			synchronized (NacosConfigManager.class) {
 				try {
 					if (Objects.isNull(service)) {
+						// 通过 NacosFactory 创建 NacosConfigService
 						service = NacosFactory.createConfigService(
 								nacosConfigProperties.assembleConfigServiceProperties());
 					}

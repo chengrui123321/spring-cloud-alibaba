@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.cloud.context.refresh.ContextRefresher;
 import org.springframework.cloud.endpoint.event.RefreshEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -46,6 +47,10 @@ import org.springframework.context.ApplicationListener;
  * @author juven.xuxb
  * @author pbting
  * @author freeman
+ *
+ * nacos 配置刷新器
+ * 在应用程序启动时，NacosContextRefresher 将 nacos 监听器添加到所有应用程序级别的 dataId 中，
+ * 当数据发生变化时，监听器会刷新配置。
  */
 public class NacosContextRefresher
 		implements ApplicationListener<ApplicationReadyEvent>, ApplicationContextAware {
@@ -53,20 +58,44 @@ public class NacosContextRefresher
 	private final static Logger log = LoggerFactory
 			.getLogger(NacosContextRefresher.class);
 
+	/**
+	 * nacos 上下文中配置的动态刷新数量
+	 */
 	private static final AtomicLong REFRESH_COUNT = new AtomicLong(0);
 
+	/**
+	 * NacosConfigProperties nacos 配置属性
+	 */
 	private NacosConfigProperties nacosConfigProperties;
 
+	/**
+	 * 是否开启刷新
+	 */
 	private final boolean isRefreshEnabled;
 
+	/**
+	 * nacos 配置刷新历史记录
+	 */
 	private final NacosRefreshHistory nacosRefreshHistory;
 
+	/**
+	 * NacosConfigService
+	 */
 	private final ConfigService configService;
 
+	/**
+	 * spring 容器
+	 */
 	private ApplicationContext applicationContext;
 
+	/**
+	 * 是否已准备
+	 */
 	private AtomicBoolean ready = new AtomicBoolean(false);
 
+	/**
+	 * 监听的集合
+	 */
 	private Map<String, Listener> listenerMap = new ConcurrentHashMap<>(16);
 
 	public NacosContextRefresher(NacosConfigManager nacosConfigManager,
@@ -77,10 +106,15 @@ public class NacosContextRefresher
 		this.isRefreshEnabled = this.nacosConfigProperties.isRefreshEnabled();
 	}
 
+	/**
+	 * ApplicationReadyEvent 回调
+	 * @param event
+	 */
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
 		// many Spring context
 		if (this.ready.compareAndSet(false, true)) {
+			// 注册 nacos 监听器
 			this.registerNacosListenersForApplications();
 		}
 	}
@@ -92,29 +126,49 @@ public class NacosContextRefresher
 
 	/**
 	 * register Nacos Listeners.
+	 *
+	 * 注册 nacos 监听器
 	 */
 	private void registerNacosListenersForApplications() {
+		// 开启动态刷新
 		if (isRefreshEnabled()) {
+			// 获取所有 NacosPropertySource
 			for (NacosPropertySource propertySource : NacosPropertySourceRepository
 					.getAll()) {
+				// 如果 NacosPropertySource 不支持动态刷新，跳过
 				if (!propertySource.isRefreshable()) {
 					continue;
 				}
+				// 获取 dataId
 				String dataId = propertySource.getDataId();
+				// 注册监听
 				registerNacosListener(propertySource.getGroup(), dataId);
 			}
 		}
 	}
 
+	/**
+	 * 注册 nacos 监听
+	 * @param groupKey group
+	 * @param dataKey dateId
+	 *
+	 * 最终刷新时发布 {@link RefreshEvent}, 由 {@link org.springframework.cloud.endpoint.event.RefreshEventListener#handle(RefreshEvent)}
+	 * 进行处理，委托给 {@link ContextRefresher#refresh()} 进行刷新
+	 */
 	private void registerNacosListener(final String groupKey, final String dataKey) {
+		// 获取 key
 		String key = NacosPropertySourceRepository.getMapKey(dataKey, groupKey);
+		// 对 key 绑定监听事件
 		Listener listener = listenerMap.computeIfAbsent(key,
 				lst -> new AbstractSharedListener() {
 					@Override
 					public void innerReceive(String dataId, String group,
 							String configInfo) {
+						// 递增刷新数量
 						refreshCountIncrement();
+						// 添加刷新记录，提供端点访问
 						nacosRefreshHistory.addRefreshRecord(dataId, group, configInfo);
+						// 发布一个刷新事件，用于同步 @Value 注解配置的属性值
 						applicationContext.publishEvent(
 								new RefreshEvent(this, null, "Refresh Nacos config"));
 						if (log.isDebugEnabled()) {
@@ -125,6 +179,7 @@ public class NacosContextRefresher
 					}
 				});
 		try {
+			// 注册监听器
 			configService.addListener(dataKey, groupKey, listener);
 			log.info("[Nacos Config] Listening config: dataId={}, group={}", dataKey,
 					groupKey);

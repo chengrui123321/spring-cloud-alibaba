@@ -25,9 +25,16 @@ import com.alibaba.cloud.nacos.client.NacosPropertySource;
 /**
  * @author xiaojing
  * @author pbting
+ *
+ * NacosPropertySource 仓库，保存所有的 NacosPropertySource
  */
 public final class NacosPropertySourceRepository {
 
+	/**
+	 * NacosPropertySource 缓存
+	 * key: NacosPropertySource name
+	 * value: NacosPropertySource
+	 */
 	private final static ConcurrentHashMap<String, NacosPropertySource> NACOS_PROPERTY_SOURCE_REPOSITORY = new ConcurrentHashMap<>();
 
 	private NacosPropertySourceRepository() {
@@ -75,6 +82,12 @@ public final class NacosPropertySourceRepository {
 		return NACOS_PROPERTY_SOURCE_REPOSITORY.get(getMapKey(dataId, group));
 	}
 
+	/**
+	 * 组合 group 和 dataId
+	 * @param dataId
+	 * @param group
+	 * @return
+	 */
 	public static String getMapKey(String dataId, String group) {
 		return String.join(NacosConfigProperties.COMMAS, String.valueOf(dataId),
 				String.valueOf(group));

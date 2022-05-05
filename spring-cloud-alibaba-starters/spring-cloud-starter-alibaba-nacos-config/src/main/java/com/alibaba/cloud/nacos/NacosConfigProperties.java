@@ -65,22 +65,28 @@ import static com.alibaba.nacos.api.PropertyKeyConst.USERNAME;
  * @author xiaojing
  * @author pbting
  * @author <a href="mailto:lyuzb@lyuzb.com">lyuzb</a>
+ *
+ * nacos 配置属性
+ * 前缀：spring.cloud.nacos.config
  */
 @ConfigurationProperties(NacosConfigProperties.PREFIX)
 public class NacosConfigProperties {
 
 	/**
 	 * Prefix of {@link NacosConfigProperties}.
+	 * 配置前缀
 	 */
 	public static final String PREFIX = "spring.cloud.nacos.config";
 
 	/**
 	 * COMMAS , .
+	 * ,
 	 */
 	public static final String COMMAS = ",";
 
 	/**
 	 * SEPARATOR , .
+	 * 分隔符
 	 */
 	public static final String SEPARATOR = "[,]";
 
@@ -89,6 +95,9 @@ public class NacosConfigProperties {
 	private static final Logger log = LoggerFactory
 			.getLogger(NacosConfigProperties.class);
 
+	/**
+	 * 环境信息
+	 */
 	@Autowired
 	@JsonIgnore
 	private Environment environment;
@@ -98,7 +107,11 @@ public class NacosConfigProperties {
 		this.overrideFromEnv();
 	}
 
+	/**
+	 * 初始化
+	 */
 	private void overrideFromEnv() {
+		// 环境为空，直接返回
 		if (environment == null) {
 			return;
 		}
@@ -123,56 +136,78 @@ public class NacosConfigProperties {
 
 	/**
 	 * nacos config server address.
+	 *
+	 * 配置中心地址
 	 */
 	private String serverAddr;
 
 	/**
 	 * the nacos authentication username.
+	 *
+	 * 用户名
 	 */
 	private String username;
 
 	/**
 	 * the nacos authentication password.
+	 *
+	 * 密码
 	 */
 	private String password;
 
 	/**
 	 * encode for nacos config content.
+	 *
+	 * 配置内容编码
 	 */
 	private String encode;
 
 	/**
 	 * nacos config group, group is config data meta info.
+	 *
+	 * 分组，默认 DEFAULT_GROUP
 	 */
 	private String group = "DEFAULT_GROUP";
 
 	/**
 	 * nacos config dataId prefix.
+	 *
+	 * dataId 前缀
 	 */
 	private String prefix;
 
 	/**
 	 * the suffix of nacos config dataId, also the file extension of config content.
+	 *
+	 * 后缀/文件扩展名，默认 properties
 	 */
 	private String fileExtension = "properties";
 
 	/**
 	 * timeout for get config from nacos.
+	 *
+	 * 获取配置超时时间，默认 3 s
 	 */
 	private int timeout = 3000;
 
 	/**
 	 * nacos maximum number of tolerable server reconnection errors.
+	 *
+	 * 最大连接错误数
 	 */
 	private String maxRetry;
 
 	/**
 	 * nacos get config long poll timeout.
+	 *
+	 * 长轮询超时时间
 	 */
 	private String configLongPollTimeout;
 
 	/**
 	 * nacos get config failure retry time.
+	 *
+	 * 获取配置重试时间
 	 */
 	private String configRetryTime;
 
@@ -182,64 +217,88 @@ public class NacosConfigProperties {
 	 * updates, you can keep the original code unchanged, just add the system parameter:
 	 * enableRemoteSyncConfig = "true" ( But there is network overhead); therefore we
 	 * recommend that you use {@link ConfigService#getConfigAndSignListener} directly.
+	 *
+	 * 如果想在程序第一次开始获取配置的时候自己拉取，注册的Listener用于以后的配置更新，可以保持原代码不变，
+	 * 只需添加系统参数：enableRemoteSyncConfig = "true" （但有网络开销）；
+	 * 因此我们建议您直接使用 {@link ConfigService#getConfigAndSignListener}。
 	 */
 	private boolean enableRemoteSyncConfig = false;
 
 	/**
 	 * endpoint for Nacos, the domain name of a service, through which the server address
 	 * can be dynamically obtained.
+	 *
+	 * nacos 端点
 	 */
 	private String endpoint;
 
 	/**
 	 * namespace, separation configuration of different environments.
+	 *
+	 * 命名空间
 	 */
 	private String namespace;
 
 	/**
 	 * access key for namespace.
+	 *
+	 * 命名空间 accessKey
 	 */
 	private String accessKey;
 
 	/**
 	 * secret key for namespace.
+	 *
+	 * 命名空间 secretKey
 	 */
 	private String secretKey;
 
 	/**
-	 * access key for namespace.
+	 * 角色名称
 	 */
 	private String ramRoleName;
 
 	/**
 	 * context path for nacos config server.
+	 *
+	 * nacos config 上下文
 	 */
 	private String contextPath;
 
 	/**
 	 * nacos config cluster name.
+	 *
+	 * nacos 集群名称
 	 */
 	private String clusterName;
 
 	/**
 	 * nacos config dataId name.
+	 *
+	 * dataId
 	 */
 	private String name;
 
 	/**
 	 * a set of shared configurations .e.g:
 	 * spring.cloud.nacos.config.shared-configs[0]=xxx .
+	 *
+	 * 共享配置集合
 	 */
 	private List<Config> sharedConfigs;
 
 	/**
 	 * a set of extensional configurations .e.g:
 	 * spring.cloud.nacos.config.extension-configs[0]=xxx .
+	 *
+	 * 扩展配置集合
 	 */
 	private List<Config> extensionConfigs;
 
 	/**
 	 * the master switch for refresh configuration, it default opened(true).
+	 *
+	 * 是否刷新配置，默认 true
 	 */
 	private boolean refreshEnabled = true;
 
@@ -553,8 +612,11 @@ public class NacosConfigProperties {
 	 * assemble properties for configService. (cause by rename : Remove the interference
 	 * of auto prompts when writing,because autocue is based on get method.
 	 * @return properties
+	 *
+	 * nacos 配置集合
 	 */
 	public Properties assembleConfigServiceProperties() {
+		// 放入 Properties 中, 在创建 NacosConfigService 时传入此配置信息
 		Properties properties = new Properties();
 		properties.put(SERVER_ADDR, Objects.toString(this.serverAddr, ""));
 		properties.put(USERNAME, Objects.toString(this.username, ""));
@@ -622,20 +684,29 @@ public class NacosConfigProperties {
 				+ ", refreshEnabled=" + refreshEnabled + '}';
 	}
 
+	/**
+	 * nacos 配置内部配置
+	 */
 	public static class Config {
 
 		/**
 		 * the data id of extended configuration.
+		 *
+		 * dataId
 		 */
 		private String dataId;
 
 		/**
 		 * the group of extended configuration, the default value is DEFAULT_GROUP.
+		 *
+		 * 分组，默认 DEFAULT_GROUP
 		 */
 		private String group = "DEFAULT_GROUP";
 
 		/**
 		 * whether to support dynamic refresh, the default does not support .
+		 *
+		 * 是否支持动态刷新，默认 false
 		 */
 		private boolean refresh = false;
 
